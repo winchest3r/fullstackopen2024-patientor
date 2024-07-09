@@ -1,4 +1,7 @@
-import { Patient as BackendPatient, Entry as BackendEntry } from '../../src/types';
+import { 
+  Patient as BackendPatient, 
+  Entry as BackendEntry,
+} from '../../src/types';
 
 export interface Diagnosis {
   code: string;

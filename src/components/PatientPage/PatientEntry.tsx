@@ -3,15 +3,19 @@ import { useEffect, useState } from 'react';
 import diagnosesService from '../../services/diagnoses';
 
 import { Entry, Diagnosis, EntryType } from "../../types";
+import { assertNever } from '../../utils';
 
-import { Typography, Box, List, ListItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
-
-import NoteIcon from '@mui/icons-material/Note';
+import { Typography, Box, Stack, Divider } from "@mui/material";
 
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import WorkIcon from '@mui/icons-material/Work';
 import NotesIcon from '@mui/icons-material/Notes';
+
+import Diagnoses from './Diagnoses';
+import HealthCheck from './HealthCheck';
+import OccupationalHealthcare from './OccupationalHealthcare';
+import Hospital from './Hospital';
 
 interface EntryProps {
   entry: Entry;
@@ -37,38 +41,22 @@ const Icon = (props: IconProps): JSX.Element => {
 const BaseEntryData = (props: EntryProps) => {
   return (
     <Box>
-      <Typography>
-        {props.entry.date} <Icon type={props.entry.type} />
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography>
+          {props.entry.date} <Icon type={props.entry.type} />
+        </Typography>
+        <Typography>
+          diagnosed by {props.entry.specialist}
+        </Typography>
+      </Stack>
       <Typography>
         <i>{props.entry.description}</i>
       </Typography>
+      <Divider />
     </Box>
   );
 };
 
-const Diagnoses = (props: EntryProps): JSX.Element => {
-  return (
-    <Box>
-      <Divider />
-      {props.entry.diagnosisCodes ? <List>
-        {props.entry.diagnosisCodes.map(d => {
-            const { code, name } = d as Diagnosis;
-            console.log(d);
-            return (
-              <ListItem key={code}>
-                <ListItemIcon>
-                  <NoteIcon />
-                </ListItemIcon>
-                <ListItemText primary={`${code} ${name}`} />
-              </ListItem>
-            );
-          }
-        )}
-      </List> : null}
-    </Box>
-  );
-};
 
 const PatientEntry = (props: EntryProps): JSX.Element => {
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
@@ -76,21 +64,18 @@ const PatientEntry = (props: EntryProps): JSX.Element => {
   useEffect(() => {
     diagnosesService
       .getAll()
-      .then(data => setDiagnoses(data));
+      .then(data => {
+        setDiagnoses(data);
+      });
   }, []);
 
-  /* eslint-disable */
-  let populatedEntry = props.entry;
-  if (populatedEntry.diagnosisCodes) {
-    populatedEntry = {
-      ...populatedEntry,
-      diagnosisCodes: props.entry.diagnosisCodes!.map(c => {
-        return {
-          ...diagnoses.find(d => d.code === c)
-        };
-      }) as Diagnosis[]
-    };
+  if (diagnoses.length === 0) {
+    return <Typography>loading...</Typography>;
   }
+
+  const populatedDiagnoses: Diagnosis[] = props.entry.diagnosisCodes ? props.entry.diagnosisCodes.map(code => {
+    return diagnoses.find(d => d.code === code) as Diagnosis;
+  }) : [];
 
   const style = { 
     border: 'solid',
@@ -104,35 +89,29 @@ const PatientEntry = (props: EntryProps): JSX.Element => {
     case 'HealthCheck':
       return (
         <Box sx={style}>
-          <BaseEntryData entry={populatedEntry} />
-          <Typography>HealthCheck</Typography>
-          <Diagnoses entry={populatedEntry} />
+          <BaseEntryData entry={props.entry} />
+          <HealthCheck entry={props.entry} />
+          <Diagnoses diagnoses={populatedDiagnoses} />
         </Box>
       );
     case 'Hospital':
       return (
         <Box sx={style}>
-          <BaseEntryData entry={populatedEntry} />
-          <Typography>Hospital</Typography>
-          <Diagnoses entry={populatedEntry} />
+          <BaseEntryData entry={props.entry} />
+          <Hospital entry={props.entry} />
+          <Diagnoses diagnoses={populatedDiagnoses} />
         </Box>
       );
-    case 'OccupationalHealthcare':
-      return (
-        <Box sx={style}>
-          <BaseEntryData entry={populatedEntry} />
-          <Typography>OccupationalHealthcare</Typography>
-          <Diagnoses entry={populatedEntry} />
-        </Box>
-      );
+      case 'OccupationalHealthcare':
+        return (
+          <Box sx={style}>
+            <BaseEntryData entry={props.entry} />
+            <OccupationalHealthcare entry={props.entry} />
+            <Diagnoses diagnoses={populatedDiagnoses} />
+          </Box>
+        );
     default:
-      return (
-        <Box sx={style}>
-          <BaseEntryData entry={populatedEntry} />
-          <Typography>Base</Typography>
-          <Diagnoses entry={populatedEntry} />
-        </Box>
-      );
+      return assertNever(props.entry);
   }
 };
 
