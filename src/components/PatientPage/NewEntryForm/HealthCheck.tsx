@@ -1,16 +1,22 @@
-import { Box, TextField, Typography, FormControl, Slider } from '@mui/material';
+import { Box, TextField, Typography, FormControl, Slider, Stack, InputLabel, OutlinedInput, Select, MenuItem } from '@mui/material';
+
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 interface HealthCheckProps {
   description: string;
   date: string;
   specialist: string;
-  diagnosisCodes: string;
+  diagnosisCodes: string[];
   healthCheckRating: number;
+
+  codes: string[];
 
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setDate: React.Dispatch<React.SetStateAction<string>>;
   setSpecialist: React.Dispatch<React.SetStateAction<string>>;
-  setDiagnosisCodes: React.Dispatch<React.SetStateAction<string>>;
+  setDiagnosisCodes: React.Dispatch<React.SetStateAction<string[]>>;
   setHealthCheckRating: React.Dispatch<React.SetStateAction<number>>;
 }
 
@@ -37,14 +43,14 @@ const HealthCheck = (props: HealthCheckProps) => {
           onChange={e => props.setDescription(e.target.value)}
           error={props.description.length === 0}
         />
-        <TextField
-          required
-          variant="standard"
-          label="Date"
-          value={props.date}
-          onChange={e => props.setDate(e.target.value)}
-          error={props.date.length === 0}
-        />
+        <Stack marginTop={3} marginBottom={3}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date"
+              value={dayjs(props.date)}
+              onChange={(val) => props.setDate(val!.toISOString())}
+            />
+          </LocalizationProvider>
         <TextField
           required
           variant="standard"
@@ -52,13 +58,23 @@ const HealthCheck = (props: HealthCheckProps) => {
           value={props.specialist}
           onChange={e => props.setSpecialist(e.target.value)}
           error={props.specialist.length === 0}
-        />
-        <TextField
-          variant="standard"
-          label="Diagnosis codes (comma separated)"
-          value={props.diagnosisCodes}
-          onChange={e => props.setDiagnosisCodes(e.target.value)}
-        />
+          />
+        </Stack>
+        <FormControl>
+          <InputLabel id="healthcheck-diagnosis-codes-label">Diagnosis Codes</InputLabel>
+            <Select
+              labelId="healthcheck-diagnosis-codes-label"
+              multiple
+              value={props.diagnosisCodes}
+              onChange={e => props.setDiagnosisCodes(e.target.value as string[])}
+              input={<OutlinedInput label="Diagnosis Codes"/>}
+            >
+              {props.codes.map(code => 
+                <MenuItem key={code} value={code}>
+                  {code}
+                </MenuItem>)}
+            </Select>
+          </FormControl>
       </FormControl>
     </Box>
   );

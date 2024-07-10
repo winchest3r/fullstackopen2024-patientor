@@ -1,7 +1,3 @@
-import { useEffect, useState } from 'react';
-
-import diagnosesService from '../../services/diagnoses';
-
 import { Entry, Diagnosis, EntryType } from "../../types";
 import { assertNever } from '../../utils';
 
@@ -18,6 +14,11 @@ import OccupationalHealthcare from './OccupationalHealthcare';
 import Hospital from './Hospital';
 
 interface EntryProps {
+  entry: Entry;
+  diagnoses: Diagnosis[];
+}
+
+interface BaseEntryProps {
   entry: Entry;
 }
 
@@ -38,7 +39,7 @@ const Icon = (props: IconProps): JSX.Element => {
   }
 };
 
-const BaseEntryData = (props: EntryProps) => {
+const BaseEntryData = (props: BaseEntryProps) => {
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -59,22 +60,8 @@ const BaseEntryData = (props: EntryProps) => {
 
 
 const PatientEntry = (props: EntryProps): JSX.Element => {
-  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
-
-  useEffect(() => {
-    diagnosesService
-      .getAll()
-      .then(data => {
-        setDiagnoses(data);
-      });
-  }, []);
-
-  if (diagnoses.length === 0) {
-    return <Typography>loading...</Typography>;
-  }
-
   const populatedDiagnoses: Diagnosis[] = props.entry.diagnosisCodes ? props.entry.diagnosisCodes.map(code => {
-    return diagnoses.find(d => d.code === code) as Diagnosis;
+    return props.diagnoses.find(d => d.code === code) as Diagnosis;
   }) : [];
 
   const style = { 

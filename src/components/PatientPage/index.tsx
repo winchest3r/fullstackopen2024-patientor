@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { PatientFull } from '../../types';
+import diagnosesService from '../../services/diagnoses';
+
+import { PatientFull, Diagnosis } from '../../types';
 import patientsService from '../../services/patients';
 
 import NewEntryForm from './NewEntryForm';
@@ -18,13 +20,25 @@ const PatientPage = (): JSX.Element => {
   const params = useParams();
   const [patient, setPatient] = useState<PatientFull | null>(null);
   const [patientPageNotification, setPatientPageNotification] = useState('');
-  
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
 
   useEffect(() => {
+    diagnosesService
+      .getAll()
+      .then(data => {
+        setDiagnoses(data);
+      });
+  }, []);
+  
+  useEffect(() => {
     patientsService
-      .getPatient(params.id as string)
-      .then(data => setPatient(data));
+    .getPatient(params.id as string)
+    .then(data => setPatient(data));
   }, [params.id]);
+
+  if (diagnoses.length === 0) {
+    return <Typography>loading...</Typography>;
+  }
 
   if (!patient) {
     return (
@@ -52,11 +66,16 @@ const PatientPage = (): JSX.Element => {
         <Typography variant="h6" style={{ marginTop: "0.5em", marginBottom: "0.5em" }}>
           entries
         </Typography>
-        <NewEntryForm setNotification={setPatientPageNotification} patient={patient} setPatient={setPatient} />
+        <NewEntryForm
+          setNotification={setPatientPageNotification}
+          patient={patient}
+          setPatient={setPatient}
+          diagnoses={diagnoses}
+        />
         <Box>
           {patient.entries.length === 0 ? <div>no entries</div> : 
             patient.entries.map(e => {
-              return <PatientEntry key={e.id} entry={e} />;
+              return <PatientEntry key={e.id} entry={e} diagnoses={diagnoses} />;
             })
           }
         </Box>

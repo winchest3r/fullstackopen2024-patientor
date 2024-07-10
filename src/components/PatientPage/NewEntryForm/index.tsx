@@ -4,7 +4,7 @@ import { Box, Button, Tab, Stack } from '@mui/material';
 import { TabContext, TabPanel, TabList } from '@mui/lab';
 
 import patientsService from '../../../services/patients';
-import { Entry, EntryType, PatientFull } from '../../../types';
+import { Entry, EntryType, PatientFull, Diagnosis } from '../../../types';
 
 import HealthCheck from './HealthCheck';
 import Hospital from './Hospital';
@@ -17,6 +17,7 @@ interface NewEntryFormProps {
   patient: PatientFull,
   setPatient: React.Dispatch<React.SetStateAction<PatientFull | null>>;
   setNotification: React.Dispatch<React.SetStateAction<string>>;
+  diagnoses: Diagnosis[];
 }
 
 const getTabType = (tab: string): string => {
@@ -37,19 +38,19 @@ const NewEntryForm = (props: NewEntryFormProps) => {
   const [tab, setTab] = useState('1');
 
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date().toISOString());
   const [specialist, setSpecialist] = useState('');
-  const [diagnosisCodes, setDiagnosisCodes] = useState('');
+  const [diagnosisCodes, setDiagnosisCodes] = useState<string[]>([]);
 
   const [healthCheckRating, setHealthCheckRating] = useState(0);
 
-  const [dischargeDate, setDischargeDate] = useState('');
+  const [dischargeDate, setDischargeDate] = useState(new Date().toISOString());
   const [dischargeCriteria, setDischargeCriteria] = useState('');
 
   const [employerName, setEmployerName] = useState('');
   const [sickLeaveCheck, setSickLeaveCheck] = useState(false);
-  const [sickLeaveStartDate, setSickLeaveStartDate] = useState('');
-  const [sickLeaveEndDate, setSickLeaveEndDate] = useState('');
+  const [sickLeaveStartDate, setSickLeaveStartDate] = useState(new Date().toISOString());
+  const [sickLeaveEndDate, setSickLeaveEndDate] = useState(new Date().toISOString());
 
 
   if (hidden) {
@@ -65,9 +66,9 @@ const NewEntryForm = (props: NewEntryFormProps) => {
 
     const baseEntry = {
       description,
-      date,
+      date: date.split('T')[0],
       specialist,
-      diagnosisCodes: diagnosisCodes ? diagnosisCodes.split(/\s*,\s*/) : [],
+      diagnosisCodes,
       type
     };
 
@@ -97,8 +98,8 @@ const NewEntryForm = (props: NewEntryFormProps) => {
           newEntry = {
             ...newEntry,
             sickLeave: {
-              startDate: sickLeaveStartDate,
-              endDate: sickLeaveEndDate
+              startDate: sickLeaveStartDate.split('T')[0],
+              endDate: sickLeaveEndDate.split('T')[0]
             }
           };
         }
@@ -123,20 +124,23 @@ const NewEntryForm = (props: NewEntryFormProps) => {
     setHidden(!hidden);
 
     setDescription('');
-    setDate('');
+    setDate(new Date().toISOString());
     setSpecialist('');
-    setDiagnosisCodes('');
+    setDiagnosisCodes([]);
 
     setHealthCheckRating(0);
 
-    setDischargeDate('');
+    setDischargeDate(new Date().toISOString());
     setDischargeCriteria('');
 
     setEmployerName('');
     setSickLeaveCheck(false);
-    setSickLeaveStartDate('');
-    setSickLeaveEndDate('');
+    setSickLeaveStartDate(new Date().toISOString());
+    setSickLeaveEndDate(new Date().toISOString());
   };
+
+  const codes = props.diagnoses.map(d => d.code);
+  codes.sort();
 
   return (
     <Box border="solid" borderColor="primary.light" marginBottom={1}>
@@ -149,6 +153,7 @@ const NewEntryForm = (props: NewEntryFormProps) => {
         <Box>
           <TabPanel value="1">
             <HealthCheck 
+              codes={codes}
               description={description} setDescription={setDescription}
               date={date} setDate={setDate}
               specialist={specialist} setSpecialist={setSpecialist}
@@ -158,6 +163,7 @@ const NewEntryForm = (props: NewEntryFormProps) => {
           </TabPanel>
           <TabPanel value="2">
             <Hospital
+              codes={codes}
               description={description} setDescription={setDescription}
               date={date} setDate={setDate}
               specialist={specialist} setSpecialist={setSpecialist}
@@ -168,6 +174,7 @@ const NewEntryForm = (props: NewEntryFormProps) => {
           </TabPanel>
           <TabPanel value="3">
             <OccupationalHealthcare
+              codes={codes}
               description={description} setDescription={setDescription}
               date={date} setDate={setDate}
               specialist={specialist} setSpecialist={setSpecialist}
